@@ -1223,7 +1223,7 @@ bool ServerEntry::processRequest(Session* sess) {
                 << " err:" << expect.status().toString();
     return true;
   }
-  auto s = sess->setResponse(expect.value());
+  auto s = sess->setResponse(std::move(expect.value()));
   if (!s.ok()) {
     return false;
   }

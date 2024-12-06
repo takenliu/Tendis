@@ -32,7 +32,8 @@ class Session : public std::enable_shared_from_this<Session> {
   Session(ServerEntry* svr, Type type);
   virtual ~Session();
   uint64_t id() const;
-  virtual Status setResponse(const std::string& s) = 0;
+  //Caution: Implements move semantics, s will be empty afterwards
+  virtual Status setResponse(std::string&& s) = 0;
   // only for unittest
   virtual std::vector<std::string> getResponse() {
     return std::vector<std::string>();
@@ -109,13 +110,13 @@ class LocalSession : public Session {
   Status cancel() final;
   int getFd() final;
   std::string getRemote() const final;
-  Status setResponse(const std::string& s) final;
+  Status setResponse(std::string&& s) final;
   virtual void drainRsp() {}
   void setArgs(const std::vector<std::string>& args);
   void setArgs(const std::string& cmd);
 
  private:
-  std::vector<char> _respBuf;
+  std::vector<std::string> _respBuf;
 };
 
 class LocalSessionGuard {

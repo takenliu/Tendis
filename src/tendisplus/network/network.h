@@ -161,7 +161,8 @@ class NetSession : public Session {
   virtual std::string getLocalRepr() const;
   asio::ip::tcp::socket borrowConn();
   asio::ip::tcp::socket* getSock();
-  virtual Status setResponse(const std::string& s);
+  //Implements move semantics, s will be empty afterwards
+  virtual Status setResponse(std::string&& s);
   void setCloseAfterRsp();
   virtual void start();
   virtual Status cancel();
@@ -256,8 +257,11 @@ class NetSession : public Session {
   bool _callbackCanWrite;
   bool _isEnded;
   bool _first;
-  std::vector<char> _sendBuffer;
-  std::vector<char> _sendBufferBack;
+  size_t _sendBufferBytes;
+  size_t _sendBufferBackBytes;
+  std::vector<std::string> _sendBufferBack;
+  std::vector<std::string> _sendBuffer;
+
   bool _closeResponse;
 
   std::shared_ptr<NetworkMatrix> _netMatrix;

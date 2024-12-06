@@ -428,6 +428,8 @@ NetSession::NetSession(std::shared_ptr<ServerEntry> server,
     _isSendRunning(false),
     _callbackCanWrite(false),
     _isEnded(false),
+    _sendBufferBytes(0),
+    _sendBufferBackBytes(0),
     _closeResponse(false),
     _netMatrix(netMatrix),
     _reqMatrix(reqMatrix),
@@ -556,13 +558,13 @@ asio::ip::tcp::socket* NetSession::getSock() {
   return &_sock;
 }
 
-Status NetSession::setResponse(const std::string& s) {
+Status NetSession::setResponse(std::string&& s) {
   std::lock_guard<std::mutex> lk(_mutex);
   // when writing response to socket, check memory limit first.
-  // memory used = content(in memory) + content(will be in sendbuffer)
+  // memory used = content(will be in sendbuffer)
   //             + sendbuffer(current) + _sendBufferBack(maybe not empty)
   _commandUsedMemory =
-    s.size() * 2 + _sendBuffer.size() + _sendBufferBack.size();
+    s.size() + _sendBufferBytes + _sendBufferBackBytes;
   auto status = checkMemLimit();
   if (!status.ok()) {
     if (_server) {
@@ -600,12 +602,15 @@ Status NetSession::setResponse(const std::string& s) {
   }
 
 #define NET_SEND_RSP_BATCH_SIZE 1400
-
   if (_isSendRunning) {
-    std::copy(s.begin(), s.end(), std::back_inserter(_sendBufferBack));
+    _sendBufferBackBytes += s.size();
+    //Afterwards, s is an empty string, content is moved to vector
+    _sendBufferBack.push_back(std::move(s));
   } else {
-    std::copy(s.begin(), s.end(), std::back_inserter(_sendBuffer));
-    if (_sendBuffer.size() > NET_SEND_RSP_BATCH_SIZE) {
+    _sendBufferBytes += s.size();
+    //Afterwards, s is an empty string, content is moved to vector
+    _sendBuffer.push_back(std::move(s));
+    if (_sendBufferBytes > NET_SEND_RSP_BATCH_SIZE) {
       drainRspWithoutLock();
     }
   }
@@ -1034,13 +1039,17 @@ void NetSession::drainRspWithoutLock() {
   uint64_t now = nsSinceEpoch();
   _isSendRunning = true;
   auto self(shared_from_this());
-  if (_sendBuffer.size() > BUFFER_LONG_SIZE) {
+  if (_sendBufferBytes > BUFFER_LONG_SIZE) {
     LOG(WARNING) << "drainRspWithoutLock async_write long size:"
-                 << _sendBuffer.size();
+                 << _sendBufferBytes;
+  }
+  std::vector<asio::const_buffer> buffers;
+  for (auto &buffer : _sendBuffer) {
+    buffers.push_back(asio::buffer(buffer.c_str(), buffer.size()));
   }
   asio::async_write(
     _sock,
-    asio::buffer(_sendBuffer.data(), _sendBuffer.size()),
+    buffers,
     [this, self, now](const std::error_code& ec, size_t actualLen) {
       _reqMatrix->sendPacketCost += nsSinceEpoch() - now;
       drainRspCallback(ec, actualLen);
@@ -1053,23 +1062,27 @@ void NetSession::drainRspCallback(const std::error_code& ec, size_t actualLen) {
     endSession();
     return;
   }
-  if (actualLen != _sendBuffer.size()) {
+  if (actualLen != _sendBufferBytes) {
     LOG(ERROR) << "conn:" << _connId << ",actualLen:" << actualLen
                << ",bufsize:" << _sendBuffer.size() << ",invalid drainRsp len";
     endSession();
     _sendBuffer.clear();
+    _sendBufferBytes = 0;
     return;
   }
   if (_server) {
     // TODO(vinchen): Is it right when cluster = true
-    _server->getServerStat().netOutputBytes += _sendBuffer.size();
+    _server->getServerStat().netOutputBytes += _sendBufferBytes;
   }
 
   {
     std::lock_guard<std::mutex> lk(_mutex);
     INVARIANT(_isSendRunning);
     _sendBuffer.clear();
+    _sendBufferBytes = 0;
     _sendBuffer.swap(_sendBufferBack);
+    _sendBufferBytes = _sendBufferBackBytes;
+    _sendBufferBackBytes = 0;
 
     if (_callbackCanWrite && !_sendBuffer.empty()) {
       _callbackCanWrite = false;

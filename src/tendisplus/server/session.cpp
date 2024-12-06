@@ -271,9 +271,9 @@ std::string LocalSession::getRemote() const {
   return "";
 }
 
-Status LocalSession::setResponse(const std::string& s) {
+Status LocalSession::setResponse(std::string&& s) {
   INVARIANT(_respBuf.size() == 0);
-  std::copy(s.begin(), s.end(), std::back_inserter(_respBuf));
+  _respBuf.push_back(std::move(s));
   return {ErrorCodes::ERR_OK, ""};
 }
 

@@ -322,15 +322,15 @@ class DumpXCommand : public Command {
                           expBuf.value().begin() + exps.value()->_end)));
     }
     /* we return keys can't be restored first */
-    for (const auto& str : errorlist) {
-      auto s = sess->setResponse(str);
+    for (auto& str : errorlist) {
+      auto s = sess->setResponse(std::move(str));
       if (!s.ok()) {
         return s;
       }
     }
 
-    for (const auto& str : bufferlist) {
-      auto s = sess->setResponse(str);
+    for (auto& str : bufferlist) {
+      auto s = sess->setResponse(std::move(str));
       if (!s.ok()) {
         return s;
       }
@@ -1920,7 +1920,7 @@ class RestoreValueCommand : public Command {
         auto eAof = recordList2Aof(result);
         RET_IF_ERR_EXPECTED(eAof);
 
-        auto s = sess->setResponse(eAof.value());
+        auto s = sess->setResponse(std::move(eAof.value()));
         RET_IF_ERR(s);
 
         result.clear();
@@ -1932,7 +1932,7 @@ class RestoreValueCommand : public Command {
       auto eAof = recordList2Aof(result);
       RET_IF_ERR_EXPECTED(eAof);
 
-      s = sess->setResponse(eAof.value());
+      s = sess->setResponse(std::move(eAof.value()));
       RET_IF_ERR(s);
 
       result.clear();
