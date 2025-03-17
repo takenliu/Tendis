@@ -12,6 +12,7 @@
 #include <cctype>
 #include <chrono>
 #include <clocale>
+#include <cstdio>
 #include <list>
 #include <map>
 #include <memory>
@@ -19,6 +20,7 @@
 #include <sstream>
 #include <string>
 #include <thread>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -1660,7 +1662,7 @@ class BinlogFlushCommand : public Command {
       if (!exptStoreId.ok()) {
         return exptStoreId.status();
       }
-      uint32_t storeId = (uint32_t)exptStoreId.value();
+      uint32_t storeId = exptStoreId.value();
       if (storeId >= server->getKVStoreCount()) {
         LOG(ERROR) << "binlogflush err storeId:" << storeId;
         return {ErrorCodes::ERR_PARSEOPT, "invalid instance num"};
@@ -2091,11 +2093,9 @@ class InfoCommand : public Command {
          << "redis_build_id:" << redisBuildId() << "\r\n"
          << "redis_mode:" << mode << "\r\n"
 #ifdef TENDIS_DEBUG
-         << "TENDIS_DEBUG:ON"
-         << "\r\n"
+         << "TENDIS_DEBUG:ON" << "\r\n"
 #else
-         << "TENDIS_DEBUG:OFF"
-         << "\r\n"
+         << "TENDIS_DEBUG:OFF" << "\r\n"
 #endif
 #ifndef _WIN32
          << "os:" << name.sysname << " " << name.release << " " << name.machine
@@ -2206,25 +2206,16 @@ class InfoCommand : public Command {
       ss << "used_memory_rss:" << rss_human_size << "\r\n";
       ss << "used_memory_rss_human:" << used_memory_rss_human << "\r\n";
       ss << "used_memory_peak:" << -1 << "\r\n";
-      ss << "used_memory_peak_human:"
-         << "-1"
-         << "\r\n";
-      ss << "total_system_memory:"
-         << "-1"
-         << "\r\n";
-      ss << "total_system_memory_human:"
-         << "-1"
-         << "\r\n";
-      ss << "used_memory_lua:"
-         << "-1"
-         << "\r\n";
+      ss << "used_memory_peak_human:" << "-1" << "\r\n";
+      ss << "total_system_memory:" << "-1" << "\r\n";
+      ss << "total_system_memory_human:" << "-1" << "\r\n";
+      ss << "used_memory_lua:" << "-1" << "\r\n";
       ss << "used_memory_vir:" << vir_human_size << "\r\n";
       ss << "used_memory_vir_human:" << used_memory_vir_human << "\r\n";
       ss << "used_memory_vir_peak_human:" << used_memory_vir_peak_human
          << "\r\n";
       ss << "used_memory_rss_peak_human:" << used_memory_rss_peak_human
          << "\r\n";
-
       ss << "\r\n";
       result << ss.str();
     }
@@ -5045,6 +5036,7 @@ class JeprofCommand : public Command {
   }
 
   Expected<std::string> getUsage() {
+#ifdef TENDIS_JEMALLOC
     std::vector<std::string> nameList = {"stats.allocated",
                                          "stats.active",
                                          "stats.metadata",
@@ -5055,7 +5047,7 @@ class JeprofCommand : public Command {
     // NOTE(takenliu): we need refresh jamalloc statistic data,
     //   but mallctl("epoch",xxx) maybe have bug and cant refresh,
     //   so we call malloc_stats_print() to refresh.
-    malloc_stats_print([](void* ctx, const char* s) {}, NULL, NULL);
+    malloc_stats_print([](void* ctx, const char* s){}, NULL, NULL);
 
     std::stringstream ss;
     Command::fmtMultiBulkLen(ss, nameList.size());
@@ -5072,6 +5064,9 @@ class JeprofCommand : public Command {
                          getSizeReadable(allocated) + ")");
     }
     return ss.str();
+#else
+    return Command::fmtErr("jemalloc is needed.");
+#endif  // !TENDIS_JEMALLOC
   }
   Expected<std::string> run(Session* sess) final {
 #ifdef TENDIS_JEMALLOC
