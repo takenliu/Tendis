@@ -2582,7 +2582,8 @@ class InfoCommand : public Command {
                                const std::string& section,
                                Session* sess,
                                std::stringstream& result) {
-    if (allsections || defsections || section == "rocksdbstats" || section == "rocksdbstatsall") {
+    if (allsections || defsections || section == "rocksdbstats" ||
+        section == "rocksdbstatsall") {
       auto server = sess->getServerEntry();
       std::map<std::string, uint64_t> map;
 
