@@ -1982,6 +1982,7 @@ TEST(Command, info) {
     {"info", "compaction"},
     {"info", "levelstats"},
     {"info", "rocksdbstats"},
+    {"info", "rocksdbstatsall"},
     {"info", "rocksdbperfstats"},
     {"info", "rocksdbbgerror"},
     {"info", "invalid"},  // it's ok

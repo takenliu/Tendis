@@ -2582,7 +2582,7 @@ class InfoCommand : public Command {
                                const std::string& section,
                                Session* sess,
                                std::stringstream& result) {
-    if (section == "rocksdbstats") {
+    if (section == "rocksdbstats" || section == "rocksdbstatsall") {
       auto server = sess->getServerEntry();
       std::map<std::string, uint64_t> map;
 
@@ -2623,11 +2623,13 @@ class InfoCommand : public Command {
           }
         }
 
-        std::string prefix = "rocksdb" + store->dbId() + ".";
-        replaceAll(tmp, "rocksdb.", prefix);
-        replaceAll(tmp, "\n", "\r\n");
+        if (section == "rocksdbstatsall") {
+          std::string prefix = "rocksdb" + store->dbId() + ".";
+          replaceAll(tmp, "rocksdb.", prefix);
+          replaceAll(tmp, "\n", "\r\n");
 
-        result << tmp;
+          result << tmp;
+        }
       }
 
       for (auto v : map) {
