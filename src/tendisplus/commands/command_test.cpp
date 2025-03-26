@@ -3,12 +3,19 @@
 // project for additional information.
 
 #include <algorithm>
+#include <cstdio>
 #include <fstream>
+#include <iostream>
 #include <limits>
+#include <list>
+#include <map>
 #include <memory>
 #include <random>
+#include <string>
 #include <utility>
 #include <vector>
+
+// Other existing includes
 
 #include "gtest/gtest.h"
 #include "rocksdb/utilities/table_properties_collectors.h"
@@ -53,7 +60,7 @@ void testSetRetry(std::shared_ptr<ServerEntry> svr) {
 
   sess.setArgs({"set", "a", "1"});
   auto expect = Command::runSessionCmd(&sess);
-  EXPECT_EQ(cnt, uint32_t(6));
+  EXPECT_EQ(cnt, static_cast<uint32_t>(6));
   EXPECT_EQ(expect.status().code(), ErrorCodes::ERR_COMMIT_RETRY);
 }
 
@@ -1823,8 +1830,8 @@ TEST(Command, keys) {
 */
 
 void testCommandArray(std::shared_ptr<ServerEntry> svr,
-                      const std::vector<std::vector<std::string>>& arr,
-                      bool isError) {
+const std::vector<std::vector<std::string>>& arr,
+bool isError) {
   asio::io_context ioContext;
   asio::ip::tcp::socket socket(ioContext), socket1(ioContext);
   NetSession sess(svr, std::move(socket), 1, false, nullptr, nullptr);
@@ -1863,8 +1870,8 @@ void testCommandArray(std::shared_ptr<ServerEntry> svr,
 }
 
 void testCommandArrayResult(
-  std::shared_ptr<ServerEntry> svr,
-  const std::vector<std::pair<std::vector<std::string>, std::string>>& arr) {
+std::shared_ptr<ServerEntry> svr,
+const std::vector<std::pair<std::vector<std::string>, std::string>>& arr) {
   asio::io_context ioContext;
   asio::ip::tcp::socket socket(ioContext), socket1(ioContext);
   NetSession sess(svr, std::move(socket), 1, false, nullptr, nullptr);
@@ -1883,9 +1890,9 @@ void testCommandArrayResult(
 }
 
 void testDiffCommandArray(
-  std::shared_ptr<ServerEntry> svr,
-  const std::vector<
-    std::pair<std::vector<std::string>, std::vector<std::string>>>& arr) {
+std::shared_ptr<ServerEntry> svr,
+const std::vector<std::pair<std::vector<std::string>,
+std::vector<std::string>>>& arr) {
   asio::io_context ioContext;
   asio::ip::tcp::socket socket(ioContext), socket1(ioContext);
   NetSession sess(svr, std::move(socket), 1, false, nullptr, nullptr);
