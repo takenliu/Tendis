@@ -15,8 +15,6 @@
 #include <utility>
 #include <vector>
 
-// Other existing includes
-
 #include "gtest/gtest.h"
 #include "rocksdb/utilities/table_properties_collectors.h"
 
@@ -1830,8 +1828,8 @@ TEST(Command, keys) {
 */
 
 void testCommandArray(std::shared_ptr<ServerEntry> svr,
-const std::vector<std::vector<std::string>>& arr,
-bool isError) {
+                      const std::vector<std::vector<std::string>>& arr,
+                      bool isError) {
   asio::io_context ioContext;
   asio::ip::tcp::socket socket(ioContext), socket1(ioContext);
   NetSession sess(svr, std::move(socket), 1, false, nullptr, nullptr);
@@ -1870,8 +1868,8 @@ bool isError) {
 }
 
 void testCommandArrayResult(
-std::shared_ptr<ServerEntry> svr,
-const std::vector<std::pair<std::vector<std::string>, std::string>>& arr) {
+  std::shared_ptr<ServerEntry> svr,
+  const std::vector<std::pair<std::vector<std::string>, std::string>>& arr) {
   asio::io_context ioContext;
   asio::ip::tcp::socket socket(ioContext), socket1(ioContext);
   NetSession sess(svr, std::move(socket), 1, false, nullptr, nullptr);
@@ -1890,9 +1888,9 @@ const std::vector<std::pair<std::vector<std::string>, std::string>>& arr) {
 }
 
 void testDiffCommandArray(
-std::shared_ptr<ServerEntry> svr,
-const std::vector<std::pair<std::vector<std::string>,
-std::vector<std::string>>>& arr) {
+  std::shared_ptr<ServerEntry> svr,
+  const std::vector<
+    std::pair<std::vector<std::string>, std::vector<std::string>>>& arr) {
   asio::io_context ioContext;
   asio::ip::tcp::socket socket(ioContext), socket1(ioContext);
   NetSession sess(svr, std::move(socket), 1, false, nullptr, nullptr);
