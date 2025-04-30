@@ -10,9 +10,12 @@
 #include <limits>
 #include <list>
 #include <map>
+#include <memory>
 #include <set>
 #include <string>
 #include <thread>
+#include <utility>
+#include <vector>
 
 #include "rapidjson/document.h"
 #include "rapidjson/error/en.h"
@@ -435,8 +438,7 @@ Status ReplManager::resetRecycleState(uint32_t storeId) {
     _logRecycStatus[storeId]->dumpBinlogID = explog.value().id;
     _logRecycStatus[storeId]->timestamp = explog.value().ts;
     _logRecycStatus[storeId]->lastFlushBinlogId = Transaction::TXNID_UNINITED;
-    LOG(INFO) << "resetRecycleState"
-              << " minValidBinlogID:"
+    LOG(INFO) << "resetRecycleState" << " minValidBinlogID:"
               << _logRecycStatus[storeId]->minValidBinlogID
               << " dumpBinlogID:" << _logRecycStatus[storeId]->dumpBinlogID
               << " timestamp:" << _logRecycStatus[storeId]->timestamp
@@ -452,8 +454,7 @@ Status ReplManager::resetRecycleState(uint32_t storeId) {
       _logRecycStatus[storeId]->dumpBinlogID = store->getHighestBinlogId() + 1;
       _logRecycStatus[storeId]->timestamp = 0;
       _logRecycStatus[storeId]->lastFlushBinlogId = Transaction::TXNID_UNINITED;
-      LOG(INFO) << "resetRecycleState"
-                << " minValidBinlogID:"
+      LOG(INFO) << "resetRecycleState" << " minValidBinlogID:"
                 << _logRecycStatus[storeId]->minValidBinlogID
                 << " dumpBinlogID:" << _logRecycStatus[storeId]->dumpBinlogID
                 << " timestamp:" << _logRecycStatus[storeId]->timestamp
@@ -712,10 +713,10 @@ void ReplManager::clearPushStatus() {
 std::string ReplManager::getRecycleStatus(uint32_t storeId) {
   std::stringstream ss;
   std::lock_guard<std::mutex> lk(_mutex);
-  ss << "minValidBinlogID: " << _logRecycStatus[storeId]->minValidBinlogID
-     << " dumpBinlogID: " << _logRecycStatus[storeId]->dumpBinlogID
-     << " ts:" << _logRecycStatus[storeId]->timestamp;
-  return ss.str();
+  ss << "minValidBinlogID:" << _logRecycStatus[storeId]->minValidBinlogID
+     << ", dumpBinlogID:" << _logRecycStatus[storeId]->dumpBinlogID
+     << ", ts:" << _logRecycStatus[storeId]->timestamp;
+  return Command::fmtBulk(ss.str());
 }
 
 // check if fullsync has done
@@ -815,7 +816,7 @@ void ReplManager::recycleBinlog(uint32_t storeId) {
       maxKeepLogs = _cfg->slaveBinlogKeepNum;  // tailSlave
     }
 
-    maxKeepLogs = std::max((uint64_t)1, maxKeepLogs);
+    maxKeepLogs = std::max(static_cast<uint64_t>(1), maxKeepLogs);
     if (highest >= maxKeepLogs && end > highest - maxKeepLogs) {
       end = highest - maxKeepLogs;
     }
@@ -1737,8 +1738,7 @@ void ReplManager::getReplInfoDetail(std::stringstream& ss) const {
       ss << "ip=" << iter->second->slave_listen_ip;
       ss << ",port=" << iter->second->slave_listen_port;
       ss << ",dest_store_id=" << iter->second->dstStoreId;
-      ss << ",state="
-         << "online";  // TODO(vinchen)
+      ss << ",state=" << "online";  // TODO(vinchen)
       ss << ",binlog_pos=" << iter->second->binlogPos;
       // lag in seconds
       ss << ",lag=" << msToNow(iter->second->binlogTs) / 1000;
