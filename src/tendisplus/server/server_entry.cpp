@@ -258,6 +258,8 @@ void SlowlogStat::slowlogDataPushEntryIfNeeded(
     slowLog << "# Query_time: " << duration << "\n";
     slowLog << "# Execute_time: " << execTime << "\n";
     slowLog << "# Thread_id: " << getCurThreadId() << "\n";
+    slowLog << "# Session_id: " << sess->id() << "\n";
+    slowLog << "# Read_Pack_ts: " << sess->getCtx()->getReadPacketTs() << "\n";
     for (uint8_t i = 0; i < LockLatencyType::MAX_LLT; ++i) {
       auto lockRecord = sess->getCtx()->generateLockRecordLogIfNeeded(
         static_cast<LockLatencyType>(i));
