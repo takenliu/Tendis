@@ -4,7 +4,10 @@
 
 #include "tendisplus/lock/mgl/mgl_mgr.h"
 
+#include <list>
+#include <string>
 #include <utility>
+#include <vector>
 
 #include "tendisplus/commands/command.h"
 #include "tendisplus/lock/mgl/lock_defines.h"
@@ -223,6 +226,15 @@ std::string MGLockMgr::toString() {
   auto locklist = getLockList();
   for (auto& vs : locklist) {
     ss << vs;
+  }
+  return ss.str();
+}
+
+std::string MGLockMgr::toStringWithLines() {
+  std::stringstream ss;
+  auto locklist = getLockList();
+  for (auto& vs : locklist) {
+    ss << vs << "\n";
   }
   return ss.str();
 }

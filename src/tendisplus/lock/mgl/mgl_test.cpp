@@ -46,11 +46,15 @@ TEST(LockShard, Align) {
 TEST(MGL, OneTarget) {
   MGLockMgr mgr;
   MGLock l1(&mgr), l2(&mgr), l3(&mgr), l4(&mgr), l5(&mgr);
-  EXPECT_EQ(l1.lock("something", LockMode::LOCK_IS, 1000), LockRes::LOCKRES_OK);
-  EXPECT_EQ(l2.lock("something", LockMode::LOCK_IS, 1000), LockRes::LOCKRES_OK);
-  EXPECT_EQ(l3.lock("something", LockMode::LOCK_IX, 1000), LockRes::LOCKRES_OK);
-  EXPECT_EQ(l4.lock("something", LockMode::LOCK_IX, 1000), LockRes::LOCKRES_OK);
-  EXPECT_EQ(l5.lock("something", LockMode::LOCK_S, 1000),
+  EXPECT_EQ(l1.lock("something", LockMode::LOCK_IS, 1000, 0, ""),
+            LockRes::LOCKRES_OK);
+  EXPECT_EQ(l2.lock("something", LockMode::LOCK_IS, 1000, 0, ""),
+            LockRes::LOCKRES_OK);
+  EXPECT_EQ(l3.lock("something", LockMode::LOCK_IX, 1000, 0, ""),
+            LockRes::LOCKRES_OK);
+  EXPECT_EQ(l4.lock("something", LockMode::LOCK_IX, 1000, 0, ""),
+            LockRes::LOCKRES_OK);
+  EXPECT_EQ(l5.lock("something", LockMode::LOCK_S, 1000, 0, ""),
             LockRes::LOCKRES_TIMEOUT);
   l1.unlock();
   l2.unlock();
@@ -62,8 +66,10 @@ TEST(MGL, OneTarget) {
 TEST(MGL, MultiTarget) {
   MGLockMgr mgr;
   MGLock l1(&mgr), l2(&mgr);
-  EXPECT_EQ(l1.lock("something", LockMode::LOCK_IS, 1000), LockRes::LOCKRES_OK);
-  EXPECT_EQ(l2.lock("something1", LockMode::LOCK_S, 1000), LockRes::LOCKRES_OK);
+  EXPECT_EQ(l1.lock("something", LockMode::LOCK_IS, 1000, 0, ""),
+            LockRes::LOCKRES_OK);
+  EXPECT_EQ(l2.lock("something1", LockMode::LOCK_S, 1000, 0, ""),
+            LockRes::LOCKRES_OK);
   l1.unlock();
   l2.unlock();
 }
@@ -71,12 +77,16 @@ TEST(MGL, MultiTarget) {
 TEST(MGL, MultiThread) {
   MGLockMgr mgr;
   MGLock l1(&mgr), l2(&mgr), l3(&mgr), l4(&mgr), l5(&mgr);
-  EXPECT_EQ(l1.lock("something", LockMode::LOCK_IS, 1000), LockRes::LOCKRES_OK);
-  EXPECT_EQ(l2.lock("something", LockMode::LOCK_IS, 1000), LockRes::LOCKRES_OK);
-  EXPECT_EQ(l3.lock("something", LockMode::LOCK_IX, 1000), LockRes::LOCKRES_OK);
-  EXPECT_EQ(l4.lock("something", LockMode::LOCK_IX, 1000), LockRes::LOCKRES_OK);
+  EXPECT_EQ(l1.lock("something", LockMode::LOCK_IS, 1000, 0, ""),
+            LockRes::LOCKRES_OK);
+  EXPECT_EQ(l2.lock("something", LockMode::LOCK_IS, 1000, 0, ""),
+            LockRes::LOCKRES_OK);
+  EXPECT_EQ(l3.lock("something", LockMode::LOCK_IX, 1000, 0, ""),
+            LockRes::LOCKRES_OK);
+  EXPECT_EQ(l4.lock("something", LockMode::LOCK_IX, 1000, 0, ""),
+            LockRes::LOCKRES_OK);
   std::thread tmp([&l5]() {
-    EXPECT_EQ(l5.lock("something", LockMode::LOCK_S, 10000),
+    EXPECT_EQ(l5.lock("something", LockMode::LOCK_S, 10000, 0, ""),
               LockRes::LOCKRES_OK);
   });
   std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -91,13 +101,14 @@ TEST(MGL, MultiThread) {
 TEST(MGL, Starvation) {
   MGLockMgr mgr;
   MGLock l1(&mgr), l2(&mgr), l3(&mgr);
-  EXPECT_EQ(l1.lock("something", LockMode::LOCK_IS, 1000), LockRes::LOCKRES_OK);
+  EXPECT_EQ(l1.lock("something", LockMode::LOCK_IS, 1000, 0, ""),
+            LockRes::LOCKRES_OK);
   std::thread tmp([&l2]() {
-    EXPECT_EQ(l2.lock("something", LockMode::LOCK_X, 10000),
+    EXPECT_EQ(l2.lock("something", LockMode::LOCK_X, 10000, 0, ""),
               LockRes::LOCKRES_OK);
   });
   std::this_thread::sleep_for(std::chrono::seconds(1));
-  EXPECT_EQ(l3.lock("something", LockMode::LOCK_IX, 1000),
+  EXPECT_EQ(l3.lock("something", LockMode::LOCK_IX, 1000, 0, ""),
             LockRes::LOCKRES_TIMEOUT);
   l1.unlock();
   tmp.join();

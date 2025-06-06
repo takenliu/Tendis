@@ -30,7 +30,11 @@ class MGLock {
   MGLock(MGLock&&) = delete;
   MGLock& operator=(const MGLock&) const = delete;
   ~MGLock();
-  LockRes lock(const std::string& target, LockMode mode, uint64_t timeoutMs);
+  LockRes lock(const std::string& target,
+               LockMode mode,
+               uint64_t timeoutMs,
+               uint64_t session_id,
+               std::string session_type);
   void unlock();
   uint64_t getHash() const {
     return _targetHash;
@@ -67,6 +71,8 @@ class MGLock {
   std::list<MGLock*>::iterator _resIter;
   MGLockMgr* _lockMgr;
   std::string _threadId;
+  uint64_t _sessionId;
+  std::string _sessionType;
 
   static std::atomic<uint64_t> _idGen;
   static std::list<MGLock*> _dummyList;
