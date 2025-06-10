@@ -73,6 +73,7 @@ class MGLockMgr {
   void lock(MGLock* core);
   void unlock(MGLock* core);
   std::string toString();
+  std::string toStringWithLines();
   std::vector<std::string> getLockList();
 
  private:

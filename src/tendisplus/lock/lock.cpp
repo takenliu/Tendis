@@ -6,6 +6,7 @@
 
 #include <limits>
 #include <memory>
+#include <string>
 
 #include "tendisplus/server/server_entry.h"
 #include "tendisplus/utils/invariant.h"
@@ -79,7 +80,13 @@ StoresLock::StoresLock(mgl::LockMode mode,
                        mgl::MGLockMgr* mgr,
                        uint64_t lockTimeoutMs)
   : ILock(nullptr, new mgl::MGLock(mgr), sess, false) {
-  _lockResult = _mgl->lock(_target, mode, lockTimeoutMs);
+  uint64_t sessId = 0;
+  std::string sessType = "";
+  if (_sess) {
+    sessId = _sess->id();
+    sessType = _sess->getTypeStr();
+  }
+  _lockResult = _mgl->lock(_target, mode, lockTimeoutMs, sessId, sessType);
 }
 
 Expected<std::unique_ptr<StoreLock>> StoreLock::AquireStoreLock(
@@ -93,6 +100,10 @@ Expected<std::unique_ptr<StoreLock>> StoreLock::AquireStoreLock(
   if (lock->getLockResult() == mgl::LockRes::LOCKRES_OK) {
     return lock;
   } else if (lock->getLockResult() == mgl::LockRes::LOCKRES_TIMEOUT) {
+    LOG(WARNING) << "Lock wait timeout, store_" << storeId << " "
+                 << lockModeRepr(mode) << ", threadId:" << getCurThreadId()
+                 << ", Locks:\n"
+                 << mgr->toStringWithLines();
     return {ErrorCodes::ERR_LOCK_TIMEOUT, "Lock wait timeout"};
   } else {
     INVARIANT_D(0);
@@ -114,11 +125,16 @@ StoreLock::StoreLock(uint32_t storeId,
   // NOTE(takenliu): std::to_string() has performance issue in multi thread,
   //     because it will use std::locale(), so use snprintf instead.
   std::string target = "store_" + uitos(storeId);
+  uint64_t sessId = 0;
+  std::string sessType = "";
   if (_sess) {
     _sess->getCtx()->setWaitLock(storeId, 0, "", mode);
+    sessId = _sess->id();
+    sessType = _sess->getTypeStr();
   }
+
   TENDIS_LOCK_LATENCY_RECORD(
-    (_lockResult = _mgl->lock(target, mode, lockTimeoutMs)),
+    (_lockResult = _mgl->lock(target, mode, lockTimeoutMs, sessId, sessType)),
     _sess,
     uitos(_storeId),
     LockLatencyType::LLT_STORE);
@@ -156,11 +172,17 @@ ChunkLock::ChunkLock(uint32_t storeId,
     // NOTE(takenliu): std::to_string() has performance issue in multi thread,
     //     because it will use std::locale(), so use snprintf instead.
     std::string target = "chunk_" + uitos(chunkId);
+
+    uint64_t sessId = 0;
+    std::string sessType = "";
     if (_sess) {
       _sess->getCtx()->setWaitLock(storeId, chunkId, "", mode);
+      sessId = _sess->id();
+      sessType = _sess->getTypeStr();
     }
+
     TENDIS_LOCK_LATENCY_RECORD(
-      (_lockResult = _mgl->lock(target, mode, lockTimeoutMs)),
+      (_lockResult = _mgl->lock(target, mode, lockTimeoutMs, sessId, sessType)),
       _sess,
       uitos(_chunkId),
       LockLatencyType::LLT_CHUNK);
@@ -185,6 +207,10 @@ Expected<std::unique_ptr<ChunkLock>> ChunkLock::AquireChunkLock(
   if (lock->getLockResult() == mgl::LockRes::LOCKRES_OK) {
     return lock;
   } else if (lock->getLockResult() == mgl::LockRes::LOCKRES_TIMEOUT) {
+    LOG(WARNING) << "Lock wait timeout, chunk_" << chunkId << " "
+                 << lockModeRepr(mode) << ", threadId:" << getCurThreadId()
+                 << ", Locks:\n"
+                 << mgr->toStringWithLines();
     return {ErrorCodes::ERR_LOCK_TIMEOUT, "Lock wait timeout"};
   } else {
     INVARIANT_D(0);
@@ -216,6 +242,10 @@ Expected<std::unique_ptr<KeyLock>> KeyLock::AquireKeyLock(
     if (lock->getLockResult() == mgl::LockRes::LOCKRES_OK) {
       return lock;
     } else if (lock->getLockResult() == mgl::LockRes::LOCKRES_TIMEOUT) {
+      LOG(WARNING) << "Lock wait timeout, key_" << key << " "
+                   << lockModeRepr(mode) << ", threadId:" << getCurThreadId()
+                   << ", Locks:\n"
+                   << mgr->toStringWithLines();
       return {ErrorCodes::ERR_LOCK_TIMEOUT, "Lock wait timeout"};
     } else {
       INVARIANT_D(0);
@@ -244,11 +274,15 @@ KeyLock::KeyLock(uint32_t storeId,
     _lockResult = _parent->getLockResult();
   } else {
     std::string target = "key_" + key;
+    uint64_t sessId = 0;
+    std::string sessType = "";
     if (_sess) {
       _sess->getCtx()->setWaitLock(storeId, chunkId, key, mode);
+      sessId = _sess->id();
+      sessType = _sess->getTypeStr();
     }
     TENDIS_LOCK_LATENCY_RECORD(
-      (_lockResult = _mgl->lock(target, mode, lockTimeoutMs)),
+      (_lockResult = _mgl->lock(target, mode, lockTimeoutMs, sessId, sessType)),
       _sess,
       key,
       LockLatencyType::LLT_KEY);

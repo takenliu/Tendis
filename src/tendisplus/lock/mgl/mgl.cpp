@@ -4,6 +4,10 @@
 
 #include "tendisplus/lock/mgl/mgl.h"
 
+#include <cstdio>
+#include <list>
+#include <string>
+
 #include "tendisplus/lock/mgl/mgl_mgr.h"
 #include "tendisplus/utils/invariant.h"
 #include "tendisplus/utils/string.h"
@@ -56,9 +60,13 @@ void MGLock::unlock() {
 
 LockRes MGLock::lock(const std::string& target,
                      LockMode mode,
-                     uint64_t timeoutMs) {
+                     uint64_t timeoutMs,
+                     uint64_t session_id,
+                     std::string session_type) {
   _target = target;
   _mode = mode;
+  _sessionId = session_id;
+  _sessionType = session_type;
   INVARIANT_D(getStatus() == LockRes::LOCKRES_UNINITED);
   _resIter = _dummyList.end();
   if (_target != "") {
@@ -103,13 +111,16 @@ std::string MGLock::toString() const {
   snprintf(buf,
            sizeof(buf),
            "id:%" PRIu64 " target:%s targetHash:%" PRIu64
-           " LockMode:%s LockRes:%d threadId:%s",
+           " LockMode:%s LockRes:%d threadId:%s sessionId:%" PRIu64
+           " sessionType:%s",
            _id,
            _target.c_str(),
            _targetHash,
            lockModeRepr(_mode),
            static_cast<int>(_res),
-           _threadId.c_str());
+           _threadId.c_str(),
+           _sessionId,
+           _sessionType.c_str());
   return std::string(buf);
 }
 
