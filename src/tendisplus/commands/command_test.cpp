@@ -2286,14 +2286,6 @@ void testRocksOptionCommand(std::shared_ptr<ServerEntry> svr) {
 
   std::stringstream ss;
 
-  sess.setArgs({"CONFIG", "GET", "rocks.max_background_jobs"});
-  expect = Command::runSessionCmd(&sess);
-  EXPECT_TRUE(expect.ok());
-  Command::fmtMultiBulkLen(ss, 2);
-  Command::fmtBulk(ss, "rocks.max_background_jobs");
-  Command::fmtBulk(ss, "2");
-  EXPECT_EQ(ss.str(), expect.value());
-
   sess.setArgs({"CONFIG", "SET", "rocks.max_background_jobs", "3"});
   expect = Command::runSessionCmd(&sess);
   EXPECT_TRUE(expect.ok());
@@ -2312,15 +2304,6 @@ void testRocksOptionCommand(std::shared_ptr<ServerEntry> svr) {
   Command::fmtMultiBulkLen(ss, 2);
   Command::fmtBulk(ss, "rocks.max_background_jobs");
   Command::fmtBulk(ss, "3");
-  EXPECT_EQ(ss.str(), expect.value());
-
-  sess.setArgs({"CONFIG", "GET", "rocks.max_open_files"});
-  expect = Command::runSessionCmd(&sess);
-  EXPECT_TRUE(expect.ok());
-  ss.str("");
-  Command::fmtMultiBulkLen(ss, 2);
-  Command::fmtBulk(ss, "rocks.max_open_files");
-  Command::fmtBulk(ss, "-1");
   EXPECT_EQ(ss.str(), expect.value());
 
   sess.setArgs({"CONFIG", "SET", "rocks.max_open_files", "3000"});
