@@ -555,6 +555,14 @@ std::bitset<CLUSTER_SLOTS> ClusterNode::getSlots() const {
   std::lock_guard<myMutex> lk(_mutex);
   return _mySlots;
 }
+// Now the function is only called by ClusterState::clusterSaveNodes()
+std::vector<uint16_t> ClusterNode::getSlotsVec() {
+  std::lock_guard<myMutex> lk(_mutex);
+  if (_slotsInfoIsOutOfDate) {
+    _mySlotsVec = std::move(bitsetEncodeVec(_mySlots));
+  }
+  return _mySlotsVec;
+}
 
 uint32_t ClusterNode::getSlavesCount() const {
   std::lock_guard<myMutex> lk(_mutex);
@@ -1680,9 +1688,7 @@ Status ClusterState::clusterSaveNodes() {
     std::string masterName =
       (node->getMaster()) ? node->getMaster()->getNodeName() : "-";
 
-    std::bitset<CLUSTER_SLOTS> slots = node->getSlots();
-
-    auto slotBuff = std::move(bitsetEncodeVec(slots));
+    auto slotBuff = node->getSlotsVec();
 
     auto meta = std::make_unique<ClusterMeta>(node->getNodeName(),
                                               node->getNodeIp(),
