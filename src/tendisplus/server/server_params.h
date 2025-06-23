@@ -591,7 +591,6 @@ class ServerParams {
 
   bool clusterEnabled = false;
   bool domainEnabled = false;
-  bool slaveReconfEnabled = true;
   bool slaveMigarateEnabled = false;
   bool clusterAllowReplicaMigration = false;
   bool aofEnabled = false;
