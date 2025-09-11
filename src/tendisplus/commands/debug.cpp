@@ -5204,4 +5204,36 @@ class JeprofCommand : public Command {
   }
 } jeprofCommand;
 
+class GlogCommand : public Command {
+ public:
+  GlogCommand() : Command("glog", "as") {}
+
+  ssize_t arity() const {
+    return 2;
+  }
+
+  int32_t firstkey() const {
+    return 0;
+  }
+
+  int32_t lastkey() const {
+    return 0;
+  }
+
+  int32_t keystep() const {
+    return 0;
+  }
+
+  Expected<std::string> run(Session* sess) final {
+    const std::vector<std::string>& args = sess->getArgs();
+    auto action = toLower(args[1]);
+    if (action == "flush") {
+      google::FlushLogFiles(google::GLOG_INFO);
+    } else {
+      return {ErrorCodes::ERR_UNKNOWN,
+              "args wrong, only support: glog [flush]"};
+    }
+    return Command::fmtOK();
+  }
+} glogCommand;
 }  // namespace tendisplus
