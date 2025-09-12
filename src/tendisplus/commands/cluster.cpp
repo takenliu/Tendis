@@ -146,7 +146,8 @@ class ClusterCommand : public Command {
             slotsMap.set(slot);
           }
         }
-
+        LOG(INFO) << args[0] << " " << args[1] << " " << args[2] << " "
+                  << args[3] << " " << bitsetStrEncode(slotsMap);
         bool needRetry = (arg2 == "restart");
         auto exptTaskid = startAllSlotsTasks(
           slotsMap, svr, nodeId, clusterState, srcNode, myself, needRetry);
@@ -935,7 +936,7 @@ class ClusterCommand : public Command {
           LOG(ERROR) << "slot:" << slot
                      << " ERR being deleting before migration";
           return {ErrorCodes::ERR_CLUSTER,
-                  "slot in deleting task" + dtos(slot)};
+                  "slot in deleting task:" + dtos(slot)};
         }
         if (!svr->getClusterMgr()->emptySlot(slot)) {
           LOG(ERROR) << "slot" << slot << " ERR not empty before migration";
