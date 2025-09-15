@@ -188,7 +188,7 @@ Status MigrateManager::stopSrcNode(const std::string& taskid,
                                    const std::string& srcIp,
                                    uint64_t port) {
   LOG(INFO) << "send stop command to srcNode:" << srcIp << ":" << port
-            << "on taskid:" << taskid;
+            << " on taskid:" << taskid;
   std::string srcHost = srcIp;
   auto srcPort = port;
   std::shared_ptr<BlockingTcpClient> client =
@@ -319,7 +319,6 @@ Status MigrateManager::stopAllTasks(bool saveSlots) {
     auto s = stopSrcNode(iter->first, node->getNodeIp(), node->getPort());
     if (!s.ok()) {
       LOG(ERROR) << "stop srcNode task fail:" << s.toString();
-      return s;
     }
   }
 
@@ -1125,7 +1124,6 @@ bool MigrateManager::receiverSchedule(const SCLOCK::time_point& now) {
               _failImportSlots.reset(i);
             }
           } else {
-            LOG(INFO) << "_migrateReceiveTask ERR, erase it, slots" << i;
             _failImportSlots.set(i);
           }
           _importNodes.erase(i);
