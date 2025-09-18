@@ -157,7 +157,7 @@ if(CMAKE_COMPILER_IS_GNUCC)
 		add_custom_command(OUTPUT "${JEMALLOC_ROOT_DIR}/include/jemalloc/jemalloc.h"
                 # NOTE(takenliu) support jemalloc profile, before start tendisplus need export as below:
                 #     export MALLOC_CONF="prof:true,prof_prefix:jeprof.out"
-				COMMAND ./autogen.sh --enable-prof --disable-shared CFLAGS=-Wno-missing-attributes CXXFLAGS=-Wno-missing-attributes
+				COMMAND ./autogen.sh --enable-prof --disable-shared "CFLAGS=-Wno-missing-attributes -g3 -ggdb3 -gdwarf-4" "CXXFLAGS=-Wno-missing-attributes -g3 -ggdb3 -gdwarf-4"
 				WORKING_DIRECTORY ${JEMALLOC_ROOT_DIR})
 		add_custom_command(OUTPUT "${JEMALLOC_ROOT_DIR}/lib/libjemalloc_pic.a"
 				COMMAND make -j16
