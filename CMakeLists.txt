@@ -224,8 +224,10 @@ set(RAPIDJSON_HAS_STDSTRING ON)
 add_subdirectory(src/thirdparty/rapidjson)
 add_subdirectory(src/thirdparty/lua)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-maybe-uninitialized") 
 add_subdirectory(${ROCKSDB_DIR}/rocksdb rocksdb EXCLUDE_FROM_ALL)
 target_compile_options(rocksdb PRIVATE -DLZ4)
+
 if(CMAKE_COMPILER_IS_GNUCC)
 set(WARN_C_CXX
 "-Wall \
