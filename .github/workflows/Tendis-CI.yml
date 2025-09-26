@@ -4,7 +4,8 @@ on:
   pull_request:
     branches: [unstable, master]
   push:
-    branches: []
+  # set to a branch that does not exist to disable the workflow
+    branches: [notExistBranch]
 jobs:
   cpplint-check:
     name: Lint
