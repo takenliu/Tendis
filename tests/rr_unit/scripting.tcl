@@ -707,5 +707,11 @@ start_server {tags {"scripting repl"}} {
                 fail "Master-Slave desync after Lua script using SELECT."
             }
         }
+
+        test {lua bit.tohex bug} {
+            set res [run_script {return bit.tohex(65535, -2147483648)} 0]
+            r ping
+            set res
+        } {0000FFFF}
     }
 }
