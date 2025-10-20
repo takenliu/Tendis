@@ -39,3 +39,6 @@ src/strbuf.c)
 
 add_definitions(-Wall -DLUA_ANSI -DENABLE_CJSON_GLOBAL -DLUA_USE_MKSTEMP)
 add_library(lua STATIC ${LUA_SRC})
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_compile_options(lua PRIVATE -O0 -DLUA_USE_APICHECK)
+endif()
