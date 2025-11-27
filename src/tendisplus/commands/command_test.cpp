@@ -2379,7 +2379,7 @@ void testRocksOptionCommand(std::shared_ptr<ServerEntry> svr) {
     EXPECT_TRUE(exptDb.ok());
 
     auto store = exptDb.value().store;
-    EXPECT_EQ(store->getOption("rocks.max_background_jobs"), 3);
+    EXPECT_EQ(store->getDBOption("rocks.max_background_jobs"), 3);
   }
 
   sess.setArgs({"CONFIG", "GET", "rocks.max_background_jobs"});
@@ -2399,7 +2399,7 @@ void testRocksOptionCommand(std::shared_ptr<ServerEntry> svr) {
     EXPECT_TRUE(exptDb.ok());
 
     auto store = exptDb.value().store;
-    EXPECT_EQ(store->getOption("rocks.max_open_files"), 3000);
+    EXPECT_EQ(store->getDBOption("rocks.max_open_files"), 3000);
   }
 
   sess.setArgs({"CONFIG", "GET", "rocks.max_open_files"});
@@ -2419,7 +2419,7 @@ void testRocksOptionCommand(std::shared_ptr<ServerEntry> svr) {
     EXPECT_TRUE(exptDb.ok());
 
     auto store = exptDb.value().store;
-    EXPECT_EQ(store->getOption("rocks.max_open_files"), -1);
+    EXPECT_EQ(store->getDBOption("rocks.max_open_files"), -1);
   }
 
   sess.setArgs({"CONFIG", "GET", "rocks.max_open_files"});
@@ -2439,7 +2439,9 @@ void testRocksOptionCommand(std::shared_ptr<ServerEntry> svr) {
     EXPECT_TRUE(exptDb.ok());
 
     auto store = exptDb.value().store;
-    EXPECT_EQ(store->getOption("rocks.periodic_compaction_seconds"), 3);
+    EXPECT_EQ(store->getCFOption(ColumnFamilyNumber::ColumnFamily_Default,
+                                 "rocks.periodic_compaction_seconds"),
+              3);
   }
 
   sess.setArgs({"CONFIG", "GET", "rocks.periodic_compaction_seconds"});
