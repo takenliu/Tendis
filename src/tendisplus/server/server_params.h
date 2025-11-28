@@ -570,10 +570,7 @@ class ServerParams {
   bool level0Compress = false;
   bool level1Compress = false;
 
-  // TxnOptions
-  // #if ROCKSDB_MAJOR > 5 || (ROCKSDB_MAJOR == 5 && ROCKSDB_MINOR > 17)
   bool skipConcurrencyControl = false;
-  // #endif
 
   bool bgcompactEnabled = false;
   uint64_t bgcompactInterval = 60;  // s

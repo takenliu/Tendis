@@ -14,7 +14,6 @@
 
 #include "tendisplus/storage/kvstore.h"
 #include "tendisplus/utils/invariant.h"
-#include "tendisplus/utils/portable.h"
 #include "tendisplus/utils/redis_port.h"
 #include "tendisplus/utils/status.h"
 #include "tendisplus/utils/string.h"
@@ -607,7 +606,7 @@ class BinlogReader {
 
  private:
   size_t _pos;
-  mystring_view _val;
+  std::string_view _val;
 };
 
 class ListMetaValue {

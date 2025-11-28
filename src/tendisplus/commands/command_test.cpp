@@ -25,7 +25,6 @@
 #include "tendisplus/server/server_params.h"
 #include "tendisplus/storage/rocks/rocks_kvstore.h"
 #include "tendisplus/utils/invariant.h"
-#include "tendisplus/utils/portable.h"
 #include "tendisplus/utils/redis_port.h"
 #include "tendisplus/utils/scopeguard.h"
 #include "tendisplus/utils/status.h"
@@ -2457,44 +2456,16 @@ void testRocksOptionCommand(std::shared_ptr<ServerEntry> svr) {
   std::string err;
   sess.setArgs({"CONFIG", "SET", "rocks.compaction_deletes_window", "100"});
   expect = Command::runSessionCmd(&sess);
-#if ROCKSDB_MAJOR > 6 || (ROCKSDB_MAJOR == 6 && ROCKSDB_MINOR > 11)
   EXPECT_TRUE(expect.ok());
-#else
-  EXPECT_FALSE(expect.ok());
-  err = Command::fmtErr(
-    "-ERR:3,msg:rocks.compaction_deletes_window can't be changed dynmaically "
-    "in rocksdb(version < 6.11)\r\n");
-  EXPECT_EQ(err, expect.status().toString());
-#endif
 
   sess.setArgs({"CONFIG", "SET", "rocks.compaction_deletes_trigger", "50"});
   expect = Command::runSessionCmd(&sess);
-#if ROCKSDB_MAJOR > 6 || (ROCKSDB_MAJOR == 6 && ROCKSDB_MINOR > 11)
   EXPECT_TRUE(expect.ok());
-#else
-  EXPECT_FALSE(expect.ok());
-  err.clear();
-  err = Command::fmtErr(
-    "-ERR:3,msg:rocks.compaction_deletes_trigger can't be changed "
-    "dynmaically "
-    "in rocksdb(version < 6.11)\r\n");
-  EXPECT_EQ(err, expect.status().toString());
-#endif
 
   sess.setArgs({"CONFIG", "SET", "rocks.compaction_deletes_ratio", "0.5"});
   expect = Command::runSessionCmd(&sess);
-#if ROCKSDB_MAJOR > 6 || (ROCKSDB_MAJOR == 6 && ROCKSDB_MINOR > 11)
   EXPECT_TRUE(expect.ok());
-#else
-  EXPECT_FALSE(expect.ok());
-  err.clear();
-  err = Command::fmtErr(
-    "-ERR:3,msg:rocks.compaction_deletes_ratio can't be changed dynmaically "
-    "in rocksdb(version < 6.11)\r\n");
-  EXPECT_EQ(err, expect.status().toString());
-#endif
 
-#if ROCKSDB_MAJOR > 6 || (ROCKSDB_MAJOR == 6 && ROCKSDB_MINOR > 11)
   std::ostringstream tableProperties;
   tableProperties << "CompactOnDeletionCollector"
                   << " (Sliding window size = " << 100
@@ -2519,7 +2490,6 @@ void testRocksOptionCommand(std::shared_ptr<ServerEntry> svr) {
       }
     }
   }
-#endif
 
   sess.setArgs({"CONFIG", "SET", "rocks.abc", "-1"});
   expect = Command::runSessionCmd(&sess);
@@ -3152,11 +3122,11 @@ TEST(Command, testFlushallWithRocksDBPath) {
 
   const auto guard = MakeGuard([&walPath, &ec] {
     destroyEnv();
-    filesystem::remove_all(walPath, ec);
+    std::filesystem::remove_all(walPath, ec);
   });
 
   EXPECT_TRUE(setupEnv());
-  EXPECT_TRUE(filesystem::create_directory(walPath));
+  EXPECT_TRUE(std::filesystem::create_directory(walPath));
 
   auto cfg = makeServerParam();
   cfg->rocksWALDir = walPath;
