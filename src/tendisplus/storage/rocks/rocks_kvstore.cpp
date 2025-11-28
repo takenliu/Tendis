@@ -3327,13 +3327,25 @@ Status RocksKVStore::setCompactOnDeletionCollectorFactory(
           "Options don't contain CompactOnDeletionTableFactory"};
 }
 
-int64_t RocksKVStore::getOption(const std::string& option) {
+int64_t RocksKVStore::getDBOption(const std::string& option) {
   if (option == "rocks.max_background_jobs") {
     return getBaseDB()->GetDBOptions().max_background_jobs;
   } else if (option == "rocks.max_open_files") {
     return getBaseDB()->GetDBOptions().max_open_files;
-  } else if (option == "rocks.periodic_compaction_seconds") {
-    return getBaseDB()->GetOptions().periodic_compaction_seconds;
+  } else {
+    return -2;
+  }
+}
+
+int64_t RocksKVStore::getCFOption(ColumnFamilyNumber cf,
+                                  const std::string& option) {
+  rocksdb::ColumnFamilyHandle* handle = getColumnFamilyHandle(cf);
+  if (option == "rocks.periodic_compaction_seconds") {
+    return getBaseDB()->GetOptions(handle).periodic_compaction_seconds;
+  } else if (option == "rocks.min_blob_size") {
+    return getBaseDB()->GetOptions(handle).min_blob_size;
+  } else if (option == "rocks.enable_blob_files") {
+    return getBaseDB()->GetOptions(handle).enable_blob_files;
   } else {
     return -2;
   }
