@@ -1768,11 +1768,11 @@ Expected<TruncateBinlogResult> RocksKVStore::truncateBinlogV2(
 
     result.err = err;
     result.written = written;
-    result.newDump = newDump;
     // slave use timestamp from last dump binlog
     result.timestamp = ts;
     newEnd = newDump - 1;
   }
+  result.newDump = newDump;
 
   auto nextTry = start;
   while (true) {
@@ -1798,7 +1798,7 @@ Expected<TruncateBinlogResult> RocksKVStore::truncateBinlogV2(
     // master use timestamp from deleterange last binlog
     result.timestamp = ts;
   }
-  if (fs == nullptr) {
+  if (result.newStart > result.newDump) {
     result.newDump = result.newStart;
   }
 
