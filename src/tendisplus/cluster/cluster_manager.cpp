@@ -796,7 +796,8 @@ void ClusterNode::setSession(std::shared_ptr<ClusterSession> sess) {
   INVARIANT_D(!_nodeSession);
   _nodeSession = sess;
   if (sess) {
-    LOG(INFO) << "ClusterNode setSession," << " node name:" << _nodeName
+    LOG(INFO) << "ClusterNode setSession,"
+              << " node name:" << _nodeName
               << " node addr:" << sess->getRemoteRepr()
               << " session id:" << sess->id();
   } else {
@@ -1220,14 +1221,18 @@ Status ClusterState::setSlots(CNodePtr n,
       }
       ++idx;
     }
+    // NOTE(takenliu): switching the slots and bumping the configEpoch
+    //     must be executed within the same mutex lock.
+    if (n == getMyselfNode()) {
+      Status s = clusterBumpConfigEpochWithoutConsensus();
+      if (!s.ok()) {
+        LOG(ERROR) << "setSlots BumpConfigEpoch fail";
+        return s;
+      }
+    }
   }
 
   if (n == getMyselfNode()) {
-    Status s = clusterBumpConfigEpochWithoutConsensus();
-    if (!s.ok()) {
-      LOG(ERROR) << "setSlots BumpConfigEpoch fail";
-      return s;
-    }
     // NOTE(wayenchen) broadcast gossip message if meta change finished
     uint64_t offset = _server->getReplManager()->replicationGetOffset();
     clusterBroadcastPong(CLUSTER_BROADCAST_ALL, offset);
@@ -1302,8 +1307,10 @@ Expected<CNodePtr> ClusterState::clusterHandleRedirect(uint32_t slot,
 
   if (node != _myself) {
     std::stringstream ss;
-    ss << "-" << "MOVED" << " " << slot << " " << node->getNodeIp() << ":"
-       << node->getPort() << "\r\n";
+    ss << "-"
+       << "MOVED"
+       << " " << slot << " " << node->getNodeIp() << ":" << node->getPort()
+       << "\r\n";
     return {ErrorCodes::ERR_MOVED, ss.str()};
   }
   return node;
@@ -1512,7 +1519,8 @@ Expected<std::string> ClusterState::getNodeInfo(CNodePtr n) {
     if (emigrStr.ok()) {
       stream << "migrateSlots:" << emigrStr.value() << "\n";
     } else {
-      stream << "migrateSlots:null" << "\n";
+      stream << "migrateSlots:null"
+             << "\n";
     }
   }
   stream << "flag:" << flags << "\n"
@@ -1911,8 +1919,9 @@ Status ClusterState::clusterSetMaster(CNodePtr node,
   }
 
   LOG(INFO) << "replication set node:" << node->getNodeName()
-            << " as my master," << "ip:" << node->getNodeIp()
-            << " port:" << node->getPort() << ",ignoreRepl:" << ignoreRepl;
+            << " as my master,"
+            << "ip:" << node->getNodeIp() << " port:" << node->getPort()
+            << ",ignoreRepl:" << ignoreRepl;
 
   resetManualFailover();
   _server->CloseAllChannel();
@@ -4406,8 +4415,9 @@ Status ClusterManager::startup() {
     auto name = _clusterState->getMyselfNode()->getNodeName();
     auto state = _clusterState->getClusterState();
     std::string clusterState = (unsigned(state) > 0) ? "OK" : "FAIL";
-    LOG(INFO) << "cluster init success:" << " myself node name " << name
-              << " cluster state is " << clusterState;
+    LOG(INFO) << "cluster init success:"
+              << " myself node name " << name << " cluster state is "
+              << clusterState;
   }
 
   std::shared_ptr<ServerParams> params = _svr->getParams();
