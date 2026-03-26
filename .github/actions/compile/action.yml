@@ -22,7 +22,7 @@ runs:
       shell: bash
       run: |
         mkdir build && cd build
-        git config --global user.email "ponyma@tencent.com"
-        git config --global user.name "ponyma"
+        git config --global user.email "example@example.com"
+        git config --global user.name "example"
         cmake -DTENDIS_DEBUG=ON ..
         cmake --build . -j20

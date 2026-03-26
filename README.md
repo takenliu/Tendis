@@ -19,6 +19,7 @@ Tendis is a high-performance distributed storage system which is fully compatibl
 - [Contributing](#Contributing)
 - [Support](#Support)
 - [License](#License)
+
 ## Introduction
 
 Tendis is a high-performance distributed storage system which is fully compatible with the Redis protocol. It uses RocksDB as the storage engine, and all data is stored to disks through RocksDB. Users can access Tendis using a Redis client, and the application hardly needs to be changed. In addition, Tendis supports storage capacity far exceeding memory, which can greatly reduce user storage costs.
@@ -137,3 +138,5 @@ Checkout [support](http://tendis.cn/#/support) for FAQs or join our discussion g
 ## License
 
 Tendis is licensed under the GNU General Public License Version 3.0. Copyright and license information can be found in the file [LICENSE.txt](LICENSE.txt).
+
+The copyright notice pertaining to the Tencent code in this repo was previously in the name of “THL A29 Limited.”  That entity has now been de-registered.  You should treat all previously distributed copies of the code as if the copyright notice was in the name of “Tencent.”

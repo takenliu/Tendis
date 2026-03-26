@@ -15,7 +15,7 @@ test -f ${h_file} || touch ${h_file}
 (cat ${h_file} | grep SHA1 | grep $GIT_SHA1) && \
 (cat ${h_file} | grep DIRTY | grep $GIT_DIRTY) && exit 0 # Already up-to-date
 
-echo "// Copyright (C) 2020 THL A29 Limited, a Tencent company.  All rights reserved." > ${h_file}
+echo "// Copyright (C) 2020 Tencent.  All rights reserved." > ${h_file}
 echo "// Please refer to the license text that comes with this tendis open source" >> ${h_file}
 echo "// project for additional information." >> ${h_file}
 echo "" >> ${h_file}
