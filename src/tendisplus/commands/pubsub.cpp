@@ -1,4 +1,4 @@
-// Copyright (C) 2024 THL A29 Limited, a Tencent company.  All rights reserved.
+// Copyright (C) 2024 Tencent.  All rights reserved.
 // Please refer to the license text that comes with this tendis open source
 // project for additional information.
 
