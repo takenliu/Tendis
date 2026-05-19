@@ -626,6 +626,8 @@ class ServerParams {
 
   uint64_t tbitmapFragmentSize = 1024;
 
+  bool protectedMode = true;
+
   int64_t luaTimeLimit = 5000;                   // ms
   int64_t luaStateMaxIdleTime = 60 * 60 * 1000;  // ms
   bool jeprofAutoDump = true;

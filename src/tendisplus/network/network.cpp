@@ -310,16 +310,45 @@ void NetworkAsio::doAccept(std::shared_ptr<asio::ip::tcp::acceptor>& acceptor) {
       // we log this error, but dont return
     }
 
-    uint64_t newConnId = _connCreated.fetch_add(1, std::memory_order_relaxed);
-    auto sess = std::make_shared<T>(
-      _server, std::move(socket), newConnId, true, _netMatrix, _reqMatrix);
-    DLOG(INFO) << "new net session, id:" << sess->id()
-               << ",connId:" << newConnId << ",from:" << sess->getRemoteRepr()
-               << " created";
-    // TODO(wayenchen): check whether clusterSession should add to
-    // ServerEntry::_sessions.
-    if (_server->addSession(std::move(sess))) {
-      ++_netMatrix->connCreated;
+    auto remote_ip = socket.remote_endpoint().address().to_string();
+    auto params = _server->getParams();
+    if (params->protectedMode && params->requirepass.empty() &&
+        remote_ip.compare(0, 4, "127.")) {
+      static const std::string deny_msg =
+        "-DENIED Tendis is running in protected mode because protected "
+        "mode is enabled and no password is set for the default user. "
+        "In this mode connections are only accepted from the loopback "
+        "interface. "
+        "If you want to connect from external computers to Tendis you "
+        "may adopt one of the following solutions: "
+        "1) Just disable protected mode sending the command "
+        "'CONFIG SET protected-mode no' from the loopback interface "
+        "by connecting to Tendis from the same host the server is "
+        "running, however MAKE SURE Tendis is not publicly accessible "
+        "from internet if you do so. Use CONFIG REWRITE to make this "
+        "change permanent. "
+        "2) Alternatively you can just disable the protected mode by "
+        "editing the Tendis configuration file, and setting the protected "
+        "mode option to 'no', and then restarting the server. "
+        "3) Set up an authentication password for the default user. "
+        "NOTE: You only need to do one of the above things in order for "
+        "the server to start accepting connections from the outside.\r\n";
+      asio::error_code err;
+      asio::write(socket, asio::buffer(deny_msg), err);
+      socket.shutdown(tcp::socket::shutdown_send, err);
+      socket.close(err);
+    } else {
+      uint64_t newConnId = _connCreated.fetch_add(1, std::memory_order_relaxed);
+      auto sess = std::make_shared<T>(
+        _server, std::move(socket), newConnId, true, _netMatrix, _reqMatrix);
+      DLOG(INFO) << "new net session, id:" << sess->id()
+                 << ",connId:" << newConnId << ",from:" << sess->getRemoteRepr()
+                 << " created";
+      // TODO(wayenchen): check whether clusterSession should add to
+      // ServerEntry::_sessions.
+      if (_server->addSession(std::move(sess))) {
+        ++_netMatrix->connCreated;
+      }
     }
 
     doAccept<T>(acceptor);
